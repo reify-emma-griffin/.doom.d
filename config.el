@@ -7,7 +7,7 @@
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets.
 (setq user-full-name    "Emma Griffin"
-      user-mail-address "eagriffin@usf.edu")
+      user-mail-address "emma.griffin@reifyhealth.com")
 
 ;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
 ;; are the three important ones:
@@ -74,45 +74,30 @@
 (setq python-shell-interpreter "ipython"
       python-shell-interpreter-args "-i --simple-prompt")
 
-;; thanks Elijah!!
-(defun vpn-netcluster ()
-  "USF can leave me the hell alone"
-  (interactive)
-  (let* ((default-directory "/sudo::/")
-         (process (start-file-process
-                   "vpn.sh"
-                   "*vpn.sh*"
-                   (expand-file-name "/home/emma/vpn.sh")))
-         (password (read-passwd "USF Password: ")))
-    (with-current-buffer (process-buffer process)
-      (doom-mark-buffer-as-real-h)
-      (comint-mode))
-    (process-send-string process password)
-    (process-send-string process "\n")
-    (process-send-eof process)))
-
-(defun ssh-netcluster ()
-  "ahaha ssh a lot to type out"
-  (interactive)
-  (find-file "/ssh:netcluster:/home/e/eagriffin/"))
-
-;; Bind the keys!
-(map! :leader
-      "v p n"
-      #'vpn-netcluster)
-
-(map! :leader
-      "s h"
-      #'ssh-netcluster)
-
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 (add-hook 'org-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'web-mode-hook 'lsp)
 
 (when (memq window-system '(mac ns x))
   (exec-path-from-shell-initialize))
 
+(setq current-node-path "~/.nvm/versions/node/v20.10.0/bin")
+
+(setq exec-path-without-old-node (remove "/Users/emma/.nvm/versions/node/v14.20.0/bin/"
+                                         exec-path))
+
+(setq exec-path (add-to-list 'exec-path-without-old-node "~/.nvm/versions/node/v20.10.0/bin"))
+
 ;; *.erb => web-mode
 (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+
+(add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
+
+;; *.
 
 ;; *.dj => java-mode
 (add-to-list 'auto-mode-alist '("\\.dj\\'" . java-mode))
@@ -205,12 +190,92 @@
              (when (string-match "/postgres\\(ql\\)?/.*\\.sgml\\'" buffer-file-name)
                (setq nxml-child-indent 1))))
 
+;; Fullscreen
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
 
 ;;; Makefiles
 
 ;; use GNU make mode instead of plain make mode
 (add-to-list 'auto-mode-alist '("/postgres\\(ql\\)?/.*Makefile.*" . makefile-gmake-mode))
 (add-to-list 'auto-mode-alist '("/postgres\\(ql\\)?/.*\\.mk\\'" . makefile-gmake-mode))
+
+(direnv-mode)
+
+;; Bengal
+(require 'cl-lib)
+
+(defun site-repl ()
+  (interactive)
+  (let ((cider-inject-dependencies-at-jack-in nil)
+        (cider-lein-parameters "with-profiles +bengal site-repl :headless :host localhost")
+        (process-environment (cl-copy-list process-environment)))
+    (setenv "PORT" "2999")
+    (setenv "DATABASE_URL" (getenv "SITE_DATABASE_URL"))
+    (cider-jack-in-clj ())))
+
+(defun sponsor-repl ()
+  (interactive)
+  (let ((cider-inject-dependencies-at-jack-in nil)
+        (cider-lein-parameters "with-profiles +bengal sponsor-repl :headless :host localhost")
+        (process-environment (cl-copy-list process-environment)))
+    (setenv "PORT" "3000")
+    (setenv "DATABASE_URL" (getenv "SPONSOR_DATABASE_URL"))
+    (cider-jack-in-clj ())))
+
+(setq flycheck-javascript-eslint-executable "eslint_d")
+(setq eslintd-fix-executable "/Users/emma/.nvm/versions/node/v14.20.0/bin/eslint_d")
+(add-hook 'typescript-tsx-mode-hook 'eslintd-fix-mode)
+(add-hook 'typescript-mode-hook 'eslintd-fix-mode)
+(add-hook 'web-mode-hook 'eslintd-fix-mode)
+
+(mmm-add-classes
+    '((js-graphql
+          :submode graphql-mode
+          :face mmm-declaration-submode-face
+          :front "[^a-zA-Z]gql`" ;; regex to find the opening tag
+          :back "`"))) ;; regex to find the closing tag
+(mmm-add-mode-ext-class 'js-mode nil 'js-graphql)
+(setq mmm-global-mode 'maybe)
+;; Optional configuration that hides the background color for a highlighted block
+;; I find it useful for debugging emacs, but when actually coding I dont want so much emphasis on submodes
+(setq mmm-submode-decoration-level 0)
+
+(setq org-image-actual-width nil)
+
+(defvar extra-clojure-vars
+  '(
+    "defnk"
+    "defnk-"
+    "defrel"
+    "defnp"
+    "defmutation"
+    "defresolver"
+    "defconfig"
+    "defhelper"
+    "defstate"
+    ))
+
+(font-lock-add-keywords 'clojure-mode
+                        `((,(concat "(\\(?:\.*/\\)?"
+                                    (regexp-opt extra-clojure-vars t)
+                                    "\\>")
+                           1 font-lock-keyword-face)))
+
+(defvar extra-cljs-vars
+  '(
+    "defmountfetchingui"
+    "defui"
+    "defcs"
+    "defc"
+    ))
+
+
+(font-lock-add-keywords 'clojurescript-mode
+                        `((,(concat "(\\(?:\.*/\\)?"
+                                    (regexp-opt extra-cljs-vars t)
+                                    "\\>")
+                           1 font-lock-keyword-face)))
+
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
 ;; - `load!' for loading external *.el files relative to this one
@@ -227,3 +292,4 @@
 ;;
 ;; You can also try 'gd' (or 'C-c g d') to jump to their definition and see how
 ;; they are implemented.
+

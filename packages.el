@@ -30,9 +30,15 @@
 (package! string-inflection)
 (package! verb)
 (package! clojars)
-;(package! inf-clojure :disable t)
+(package! inf-clojure)
 (package! csproj-mode)
 (package! assess)
+(package! exec-path-from-shell)
+(package! eslintd-fix)
+(package! mmm-mode)
+(package! graphql-mode)
+(package! terraform-mode)
+(package! sql-indent)
 
 ;; Fixes weird issue that occurred with `./doom sync`
 (package! gitconfig-mode
@@ -42,11 +48,8 @@
 	  :recipe (:host github :repo "magit/git-modes"
                    :files ("gitignore-mode.el")))
 
-(package! inf-clojure
-         :recipe (:host github :repo "E-A-Griffin/inf-clojure"
-                  :branch "master"))
-
-(unpin! inf-clojure)
+(package! direnv)
+(package! powerline)
 
 ;; To install a package directly from a particular repo, you'll need to specify
 ;; a `:recipe'. You'll find documentation on what `:recipe' accepts here:
